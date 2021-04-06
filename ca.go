@@ -52,21 +52,20 @@ func loadCertAndKey(certFile string, keyFile string) (*x509.Certificate, *rsa.Pr
 	return cert, privKey, nil
 }
 
-func loadCA() (error, bool) {
-
+func loadCA() (bool, error) {
 	newCA := false
 	cert, key, err := loadCertAndKey("caCert.pem", "caKey.pem")
 	if err != nil {
 		newCA = true
 		cert, key, err = createCA()
 		if err != nil {
-			return err, newCA
+			return newCA, err
 		}
 		caMutex.Lock()
 		err = saveCertificateAndKey(cert, cert, key, key, "caCert.pem", "caKey.pem")
 		caMutex.Unlock()
 		if err != nil {
-			return err, newCA
+			return newCA, err
 		}
 	}
 	caMutex.Lock()
@@ -75,7 +74,7 @@ func loadCA() (error, bool) {
 	caPrivKey = key
 	caMutex.Unlock()
 
-	return nil, newCA
+	return newCA, nil
 }
 
 func saveCertificateAndKey(caCert *x509.Certificate, cert *x509.Certificate, caPrivKey *rsa.PrivateKey, key *rsa.PrivateKey, certFile string, keyFile string) error {

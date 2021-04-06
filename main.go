@@ -7,7 +7,6 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -20,7 +19,7 @@ const SECRET = "cdslfjlkjsSLDKal"
 const nonce = "ciadfjdalkfj"
 
 func setupCertificates() {
-	err, newCA := loadCA()
+	newCA, err := loadCA()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -61,7 +60,7 @@ func setupCertificates() {
 			command := exec.Command("cp", "./caCert.pem", caCertFile)
 			err := command.Run()
 			if err != nil || command.ProcessState.ExitCode() != 0 {
-				log.Fatal("Cannot copy the cas files")
+				log.Fatal("cannot copy the cas files")
 			}
 		}()
 	}
@@ -71,15 +70,8 @@ func setupTLS() *tls.Config {
 
 	setupCertificates()
 
-	caBytes, err := ioutil.ReadFile("./caCert.pem")
-	if err != nil {
-		log.Fatal(err)
-	}
 	pool := x509.NewCertPool()
-	ok := pool.AppendCertsFromPEM(caBytes)
-	if !ok {
-		log.Fatal("cannot parse caCert.pem")
-	}
+	pool.AddCert(caCert)
 
 	tlsConfig := &tls.Config{
 		ClientCAs:  pool,
